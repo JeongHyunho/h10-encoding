@@ -5,6 +5,7 @@
 
 % 환경 변수
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 v3d_dir  = getenv('V3D_PATH');
 if isempty(data_dir) || isempty(v3d_dir)
@@ -63,7 +64,7 @@ for ti = 1:numel(targets)
     end
     fp_path = fullfile(fp_dir(1).folder, fp_dir(1).name);
     % read_fp_table을 사용해 TDMS를 표준화된 힘판 테이블로 읽기
-    fp_freq = 500; % encode_all과 동일 기본 주파수 가정
+    fp_freq = FP_FREQ;
     calmat_left = readmatrix(fullfile(data_dir, 'fp', 'cal_mat_left.txt'));
     calmat_right = readmatrix(fullfile(data_dir, 'fp', 'cal_mat_right.txt'));
     try

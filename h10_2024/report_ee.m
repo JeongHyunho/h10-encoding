@@ -12,6 +12,7 @@
 close all; clear
 
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 report_dir = fullfile(data_dir, 'report');
 
@@ -319,7 +320,7 @@ for i = rs.sub_pass+1:rs.n_sub
         cont_info(j) = sub_param.(walk);
     end
 
-    [~, idx] = ismember(cont_info, ["5m", "10m", "15m"]);
+    [~, idx] = ismember(cont_info, CONT_DURATIONS);
     [~, sort_idx] = sort(idx);
     cont_info = cont_info(sort_idx);
     ee_cont = ee_cont(sort_idx, :, :);
