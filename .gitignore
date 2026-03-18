@@ -1,0 +1,8 @@
+*.asv
+h10_2024/setup.m
+h10_2024/emg_channel_success*.csv
+h10_2024/subject_summary.xlsx
+utils/ezc3d_matlab/*.lib
+.DS_Store
+Thumbs.db
+desktop.ini
