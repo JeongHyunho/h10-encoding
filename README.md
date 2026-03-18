@@ -57,6 +57,62 @@ DATA_DIR/
 | 6 | `inv_dyn_report.m` | 관절 토크/일률 분석 | (리포트) |
 | 7 | `report_ee.m` / `h10_report.m` | 에너지 소모/외골격 결과 리포트 | (리포트) |
 
+## Glossary
+
+| 약어 | 의미 |
+|------|------|
+| `K5` | COSMED K5 호흡가스 분석기 (대사 측정) |
+| `FP` | Force Plate (지면반력계) |
+| `H10` | H10 고관절 외골격 (연구용 프로토타입) |
+| `V3D` | Visual3D (역동역학 소프트웨어) |
+| `EMG` | 근전도 (Electromyography) |
+| `ICM` | Instantaneous Cost Mapping (Koller et al. 2019) |
+| `ee` | Energy Expenditure, 에너지 소모율 (W) |
+| `disc` | Discrete protocol, 이산 프로토콜 (9점 격자) |
+| `cont` | Continuous protocol, 연속 프로토콜 (5/10/15분) |
+| `nat` / `non_exo` | 비보조 자연 보행 (외골격 미착용) |
+| `trs` | Transparent mode (외골격 착용, 토크 0) |
+| `SS` / `DS` | Single Support / Double Support (단각/양각 지지) |
+| `BPM` | Beats Per Minute (보행 빈도) |
+| `MVC` | Maximum Voluntary Contraction (최대 수의 수축) |
+
+## Data Flow
+
+```
+Raw Data (K5/FP/H10/Log/EMG/C3D)
+    │
+    ├─ insane_check.m ──────────────────── (검증 리포트)
+    ├─ post_log_process.m ─────────────── log_rs.mat (로그 캐시)
+    │
+    ├─ encode_all.m ───────────────────── enc_rs.mat
+    │       │
+    │       ├─ k5_continuous_processing.m ── k5_cont_results.mat
+    │       ├─ report_ee.m ────────────── (EE 리포트 Figure)
+    │       └─ h10_report.m ───────────── (H10 리포트 Figure)
+    │
+    ├─ emg_post_processing.m ──────────── emg_norm.mat
+    │
+    └─ visual3d_result.m ─────────────── idyn_summary.mat
+            └─ inv_dyn_report.m ───────── (역동역학 분석)
+```
+
+## Key Struct: `enc_rs.mat`
+
+`encode_all.m`이 생성하는 `rs` 구조체의 주요 필드:
+
+| 필드 | 설명 |
+|------|------|
+| `rs.sub_info` | 참여자 정보 테이블 (ID, age, height, weight, 시도 인덱스) |
+| `rs.param` | 프로토콜 파라미터 테이블 (시도별 토크 레벨) |
+| `rs.pg_x`, `rs.pg_y` | 반응곡면 파라미터 격자 (141x141, Nm/kg) |
+| `rs.<SubID>` | 참여자별 데이터 구조체 |
+| `rs.<SubID>.walk<N>` | 시도별 결과 (ee_walk, ee_stand, h10, freq 등) |
+| `rs.<SubID>.disc_p` | 이산 시도 파라미터 (9x2, Nm/kg) |
+| `rs.<SubID>.disc_ee` | 이산 시도 EE (9x1, W) |
+| `rs.<SubID>.nat_ee` | 자연 보행 EE (W) |
+| `rs.cont_fit` | 풀링된 연속 프로토콜 ICM 적합 결과 |
+| `rs.units` | 모든 필드의 단위 메타데이터 |
+
 ## Directory Layout
 
 ```
@@ -64,6 +120,7 @@ h10-encoding/
 ├── setup.m                    # utils/ MATLAB path 추가
 ├── h10_2024/
 │   ├── setup_template.m       # 로컬 환경 설정 템플릿
+│   ├── config.m               # 공유 상수 정의
 │   ├── encode_all.m           # 메인 파이프라인
 │   ├── k5_continuous_processing.m
 │   ├── emg_post_processing.m
