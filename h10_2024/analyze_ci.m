@@ -4,7 +4,8 @@
 clear; close all;
 
 % 데이터 로드
-load('C:\Users\user\Dropbox\연구관련(6년)\실험관련\H10 연속 프로토콜\데이터\export\k5_cont_results.mat');
+data_dir = getenv('DATA_DIR');
+load(fullfile(data_dir, 'export', 'k5_cont_results.mat'));
 
 fprintf('=== 2차원 파라미터 공간 중앙선 CI 분석 ===\n\n');
 

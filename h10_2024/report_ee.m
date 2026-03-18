@@ -92,7 +92,7 @@ for i = rs.sub_pass+1:rs.n_sub
 
     close(fh)
 
-    cprintf('key', '[Standing EE] %s done!\n', sub_name)
+    fprintf('[Standing EE] %s done!\n', sub_name)
 end
 
 %% 이산 시도 결과, Figure 생성
@@ -177,7 +177,7 @@ for i = rs.sub_pass+1:rs.n_sub
         close(fh)
     end
 
-    cprintf('key', '[Natural/Discrete EE] %s done!\n', sub_name)
+    fprintf('[Natural/Discrete EE] %s done!\n', sub_name)
 end
 
 
@@ -221,7 +221,7 @@ for i = rs.sub_pass+1:rs.n_sub
         close(fh)
     end
 
-    cprintf('key', '[Continuous EE] %s done!\n', sub_name)
+    fprintf('[Continuous EE] %s done!\n', sub_name)
 end
 
 %% 이산 EE landscape
