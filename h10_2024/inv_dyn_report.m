@@ -117,8 +117,7 @@ for i = 1+sub_pass:n_sub
                 walk_v3d.(sprintf("L_%s_Moment", k)).x(:, l_valid)];
             jvel = [walk_v3d.(sprintf("R_%s_JVel", k)).x(:, r_valid), ...
                 walk_v3d.(sprintf("L_%s_JVel", k)).x(:, l_valid)];
-            % pow = [walk_v3d.(sprintf("R_%s_Power", k)).x(:, r_valid), ...
-            %     walk_v3d.(sprintf("L_%s_Power", k)).x(:, l_valid)];
+            % V3D Power 대신 moment*jvel 직접 계산 (부호 일관성)
             pow = mom .* jvel * pi / 180;
 
             idyn_rs.(sub_name).(walk).(lower(k)+"_rom") = max(ang, [], 1) - min(ang, [], 1);

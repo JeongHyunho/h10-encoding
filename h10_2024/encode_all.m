@@ -233,15 +233,15 @@ for i = rs.sub_pass+1:rs.n_sub
             if  ismember(j, [idx_info.non_exo; idx_info.train; idx_info.transparent; idx_info.disc])   % discrete protocol
 
                 % walking ee
-                w_int = sub_walk.(walk);
-                if ~iscell(w_int) || isempty(w_int{1})
+                walk_interval = sub_walk.(walk);
+                if ~iscell(walk_interval) || isempty(walk_interval{1})
                     [t_, ee_, ~, ee_walk] = k5_to_ee(k5_table, -120, -1);  % 마지막 120초~1초 전 구간 (정상상태 walking)
                 else
-                    w_int = str2num(w_int{1});
+                    walk_interval = str2num(walk_interval{1});
                     ee_tmp = [];
                     ee_sum = 0;
                     ee_dur = 0;
-                    for int = w_int'
+                    for int = walk_interval'
                         [t_, ee_, rg, ~] = k5_to_ee(k5_table, int(1), int(2));
                         ee_tmp = [ee_tmp; ee_(rg)];
                         t__ = t_(rg);
@@ -258,12 +258,12 @@ for i = rs.sub_pass+1:rs.n_sub
 
                 % standing ee
                 if ~ismember(j, idx_info.stand_fail)
-                    st_int = sub_stand.(walk);
-                    if ~iscell(st_int) || isempty(st_int{1})
+                    stand_interval = sub_stand.(walk);
+                    if ~iscell(stand_interval) || isempty(stand_interval{1})
                         [~, ~, ~, ee_stand] = k5_to_ee(k5_table, 0, 60);
                     else
-                        st_int = str2num(st_int{1});
-                        [~, ~, ~, ee_stand] = k5_to_ee(k5_table, st_int(1), st_int(2));
+                        stand_interval = str2num(stand_interval{1});
+                        [~, ~, ~, ee_stand] = k5_to_ee(k5_table, stand_interval(1), stand_interval(2));
                     end
                     walk_rs.ee_stand = ee_stand;
                 end
@@ -437,20 +437,7 @@ for i = rs.sub_pass+1:rs.n_sub
             end
         end
 
-        % % Mocap
-        % mocap_file = fullfile(data_dir, 'visual3d', 'processed', sub_name, walk, [walk, '.c3d']);
-        % evt_file = fullfile(data_dir, 'visual3d', 'processed', sub_name, walk, 'events.txt');
-        % if exist(mocap_file, "file")
-        %     c3d = ezc3dRead(char(mocap_file));
-        %     evt = read_events_struct(evt_file);
-        % 
-        %     % step length
-        %     [~, ~, slen_stat] = fp_to_slen(c3d, evt, for_vel, true);
-        %     walk_rs.slen = slen_stat;
-        % 
-        %     % emg
-        % 
-        % end
+        % Mocap/EMG 처리는 visual3d_result.m 및 emg_post_processing.m 참조
 
         % H10
         if ~isempty(h10_file)
@@ -548,27 +535,27 @@ for i = rs.sub_pass+1:rs.n_sub
     % 참여자별 9점 격자의 EE, transparent EE, standing EE 집계
 
     % ee summary 저장
-    idx_w = setdiff(idx_info.disc, idx_info.eval_fail);
-    idx_w_trs = setdiff(idx_info.transparent, idx_info.eval_fail);
-    idx_w_na = setdiff(idx_info.non_exo, idx_info.eval_fail);
-    idx_st = setdiff([idx_info.disc; idx_info.transparent], [idx_info.eval_fail; idx_info.stand_fail]);
-    idx_st_na = setdiff(idx_info.non_exo, [idx_info.eval_fail; idx_info.stand_fail]);
+    idx_disc_valid = setdiff(idx_info.disc, idx_info.eval_fail);
+    idx_trs_valid = setdiff(idx_info.transparent, idx_info.eval_fail);
+    idx_nat_valid = setdiff(idx_info.non_exo, idx_info.eval_fail);
+    idx_stand_valid = setdiff([idx_info.disc; idx_info.transparent], [idx_info.eval_fail; idx_info.stand_fail]);
+    idx_stand_nat_valid = setdiff(idx_info.non_exo, [idx_info.eval_fail; idx_info.stand_fail]);
 
-    p_exo = cell2mat(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).p, idx_w, 'UniformOutput', false));
+    p_exo = cell2mat(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).p, idx_disc_valid, 'UniformOutput', false));
     p_exo = round(p_exo, 2);
 
-    w_exo = arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_walk(1), idx_w);
-    w_trs = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_walk(1), idx_w_trs));
-    w_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_walk(1), idx_w_na));
-    st_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_stand(1), idx_st));
-    st_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_stand(1), idx_st_na));
-    freq_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).freq(1), idx_w_na));
-    com_pow_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).com_pow(1), idx_w_na));
-    ssT_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ssT(1), idx_w_na));
-    dsT_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ssT(1), idx_w_na));
+    ee_disc_exo = arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_walk(1), idx_disc_valid);
+    ee_disc_trs = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_walk(1), idx_trs_valid));
+    ee_disc_nat = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_walk(1), idx_nat_valid));
+    ee_stand_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_stand(1), idx_stand_valid));
+    ee_stand_nat = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ee_stand(1), idx_stand_nat_valid));
+    freq_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).freq(1), idx_nat_valid));
+    com_pow_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).com_pow(1), idx_nat_valid));
+    ssT_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ssT(1), idx_nat_valid));
+    dsT_no_exo = mean(arrayfun(@(x) sub_rs.(sprintf('walk%d', x)).ssT(1), idx_nat_valid));
 
-    sub_rs.nat_ee = w_no_exo;
-    sub_rs.nat_st = st_no_exo;
+    sub_rs.nat_ee = ee_disc_nat;
+    sub_rs.nat_st = ee_stand_nat;
     sub_rs.nat_freq = freq_no_exo;
     sub_rs.nat_com_pow = com_pow_no_exo;
     sub_rs.nat_ssT = ssT_no_exo;
@@ -577,7 +564,7 @@ for i = rs.sub_pass+1:rs.n_sub
     [is_mem1, sort_idx] = ismember(disc_p, p_exo, 'rows');
     if all(sort_idx > 0)
         sub_rs.disc_p = p_exo(sort_idx, :);
-        sub_rs.disc_ee = w_exo(sort_idx);
+        sub_rs.disc_ee = ee_disc_exo(sort_idx);
     else
         warning("[%s disc] non-usual disc_p!\n", sub_name)
         is_mem2 = ismember(p_exo, disc_p, 'rows');
@@ -585,7 +572,7 @@ for i = rs.sub_pass+1:rs.n_sub
 
         [~, sort_idx] = ismember(disc_p, p_exo, 'rows');
         sub_rs.disc_p = p_exo(sort_idx, :);
-        sub_rs.disc_ee = w_exo(sort_idx);
+        sub_rs.disc_ee = ee_disc_exo(sort_idx);
         sub_rs.disc_ee(~is_mem1) = nan;
     end
 
@@ -598,8 +585,8 @@ for i = rs.sub_pass+1:rs.n_sub
         all_disc_sub = [all_disc_sub; repmat({char(sub_name)}, sum(valid_disc), 1)];
     end
 
-    sub_rs.disc_trs = w_trs;
-    sub_rs.disc_st = st_exo;
+    sub_rs.disc_trs = ee_disc_trs;
+    sub_rs.disc_st = ee_stand_exo;
 
     rs.(sub_name) = sub_rs;
     fprintf('[Encoding] %s done!\n', sub_name)

@@ -246,17 +246,17 @@ for i = rs.sub_pass+1:rs.n_sub
     sub_rep = fullfile(report_dir, sub_name);
 
     fh = figure('Visible', 'off'); hold on
-    w_perc = ((sub_rs.disc_ee - sub_rs.disc_st) ./  (sub_rs.nat_ee - sub_rs.disc_st) - 1) * 100;
-    trs_perc = ((sub_rs.disc_trs - sub_rs.disc_st) ./  (sub_rs.nat_ee - sub_rs.disc_st) - 1) * 100;
+    ee_pct_change = ((sub_rs.disc_ee - sub_rs.disc_st) ./  (sub_rs.nat_ee - sub_rs.disc_st) - 1) * 100;
+    trs_pct_change = ((sub_rs.disc_trs - sub_rs.disc_st) ./  (sub_rs.nat_ee - sub_rs.disc_st) - 1) * 100;
 
-    scatter3(sub_rs.disc_p(:, 1), sub_rs.disc_p(:, 2), w_perc, 100, w_perc, 'filled');
+    scatter3(sub_rs.disc_p(:, 1), sub_rs.disc_p(:, 2), ee_pct_change, 100, ee_pct_change, 'filled');
     cb = colorbar; clim([-30, 30])
     title(sprintf('Disc %s (%.2f Kg)', sub_name, sub_w))
 
     % colorbar 에 transparent ee 표시
-    if ~isnan(trs_perc)
+    if ~isnan(trs_pct_change)
         cb.Label.String = 'Assist Effect (%)';
-        [B, I] = sort([cb.Ticks, trs_perc]);
+        [B, I] = sort([cb.Ticks, trs_pct_change]);
         tick_labels = [cb.TickLabels; '\bf\color{red}◀'];
         cb.Ticks = B;
         cb.TickLabels = tick_labels(I);
@@ -264,7 +264,7 @@ for i = rs.sub_pass+1:rs.n_sub
 
     % 2D surface 회귀
     ft = fittype('poly22');
-    [fit_rs, gof] = fit(sub_rs.disc_p, w_perc, ft);
+    [fit_rs, gof] = fit(sub_rs.disc_p, ee_pct_change, ft);
     fprintf("Disc, %s, R2=%.2f\n", sub_name, gof.rsquare);
     Z = feval(fit_rs, rs.pg_x, rs.pg_y);
     surf(rs.pg_x, rs.pg_y, Z, 'FaceAlpha', 0.5, 'EdgeColor', 'none'); % 회귀된 surface 위에 표시
@@ -326,12 +326,12 @@ for i = rs.sub_pass+1:rs.n_sub
     ee_cont = ee_cont(sort_idx, :, :);
 
     fh = figure('Position', [mon_pos(2,1), mon_pos(2,2), 800, 1600], 'Visible', 'off'); hold on
-    w_perc = ((ee_cont - sub_rs.disc_st) ./  (sub_rs.nat_ee - sub_rs.disc_st) - 1) * 100;
+    ee_pct_change = ((ee_cont - sub_rs.disc_st) ./  (sub_rs.nat_ee - sub_rs.disc_st) - 1) * 100;
 
     for j = 1:length(cont)
         subplot(length(cont), 1, j)
 
-        surf(rs.pg_x, rs.pg_y, squeeze(w_perc(j, :, :)), 'EdgeColor', 'none')
+        surf(rs.pg_x, rs.pg_y, squeeze(ee_pct_change(j, :, :)), 'EdgeColor', 'none')
         title(cont_info(j))
         clim([-30, 30]), zlim([-40, 40])
     end
@@ -351,8 +351,8 @@ end
 %% Standing EE 비교
 % exo vs. no_exo 의 standing ee 차이
 
-st_exo_array = [];
-st_ne_array = [];
+standing_exo_arr = [];
+standing_nat_arr = [];
 
 for i = rs.sub_pass+1:rs.n_sub
     sub_name = rs.sub_info.ID(i);
@@ -366,18 +366,18 @@ for i = rs.sub_pass+1:rs.n_sub
         if isempty(j) || ismember(j, exc_idx), continue, end
         walk = sprintf("walk%d", j);
         w_rs = sub_rs.(walk);
-        st_exo_array = [st_exo_array; w_rs.ee_stand(1) / sub_w];
+        standing_exo_arr = [standing_exo_arr; w_rs.ee_stand(1) / sub_w];
 
         if ismember("nat_st", fieldnames(w_rs))
-            st_ne_array = [st_ne_array; w_rs.nat_st / sub_w];
+            standing_nat_arr = [standing_nat_arr; w_rs.nat_st / sub_w];
         else
-            st_ne_array = [st_ne_array; sub_rs.nat_st / sub_w];
+            standing_nat_arr = [standing_nat_arr; sub_rs.nat_st / sub_w];
         end
     end
 end
 
-[~, p] = ttest(st_exo_array, st_ne_array);
+[~, p] = ttest(standing_exo_arr, standing_nat_arr);
 fprintf("Standing EE: (Exo) %.2f ± %.2f vs. (No exo) %.2f ± %.2f (p %.4f)\n", ...
-    mean(st_exo_array), std(st_exo_array), ...
-    mean(st_ne_array), std(st_ne_array), ...
+    mean(standing_exo_arr), std(standing_exo_arr), ...
+    mean(standing_nat_arr), std(standing_nat_arr), ...
     p)
