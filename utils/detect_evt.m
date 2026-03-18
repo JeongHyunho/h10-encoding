@@ -1,4 +1,28 @@
 function [hs_rv, to_rv] = detect_evt(fz)
+%DETECT_EVT  수직 지면반력(GRF)에서 보행 이벤트(heel-strike, toe-off) 검출
+%
+%   [hs_rv, to_rv] = DETECT_EVT(fz)
+%
+%   2단계 임계값 알고리즘을 사용한다:
+%     1) 1차 검출: 150 N 임계값으로 대략적 이벤트 위치 탐색
+%     2) 정밀 보정: 전후 150 샘플 내에서 30 N 임계값으로 정확한 교차점 결정
+%   heel-strike 이후 가장 가까운 toe-off를 쌍으로 매칭한다.
+%
+%   입력:
+%     fz — 수직 지면반력 벡터 (단일 발) [Nx1, N]
+%
+%   출력:
+%     hs_rv — heel-strike 인덱스 벡터 [Mx1, sample index]
+%     to_rv — 대응하는 toe-off 인덱스 벡터 [Mx1, sample index]
+%             각 hs_rv(i)에 대해 to_rv(i) > hs_rv(i)
+%
+%   알고리즘:
+%     1차 임계값(fThFirst=150 N)으로 후보 검출 후,
+%     정밀 임계값(fThreshold=30 N)으로 교차점을 보정한다.
+%     hs-to 쌍이 매칭되지 않는 이벤트는 제거된다.
+%
+%   참고: fp_to_freq, fp_to_ssds_time, fp_to_power
+
 % detection setting
 fThreshold = 30;
 minLen = 100;

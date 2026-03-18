@@ -1,4 +1,18 @@
-%% Insane check for encode_all.m inputs
+%% insane_check.m — 인코딩 입력 파일 무결성 검사
+% K5, FP, H10, Log, EMG 파일의 존재 여부·중복·헤더 필드를 점검하고
+% 이슈 목록을 CSV로 내보낸다.
+%
+% 의존성:
+%   - setup.m
+%   - h10_param.csv, sub_info.csv
+%   - DATA_DIR 및 V3D_PATH 환경변수
+%
+% 출력:
+%   - DATA_DIR/export/insane_check_all.csv
+%   - DATA_DIR/export/insane_check_issues.csv
+%
+% 파이프라인 순서: [이 스크립트] → post_log_process → encode_all
+%
 % Reports issues in these categories:
 % - File existence/duplicates: k5_missing, k5_multiple, fp_missing, fp_multiple,
 %   h10_missing, h10_multiple, log_missing, log_multiple_noncont
@@ -11,10 +25,6 @@
 % - H10/Log required unless non_exo
 % - FP always required
 % - EMG required unless eval_fail (emg_exported_*.txt under V3D_PATH)
-%
-% Outputs:
-% - DATA_DIR/export/insane_check_all.csv
-% - DATA_DIR/export/insane_check_issues.csv
 close all; clear
 
 mp = mfilename('fullpath');
@@ -22,12 +32,13 @@ if contains(mp, 'AppData'), mp = matlab.desktop.editor.getActiveFilename; end
 cd(fileparts(mp));
 
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 if ~isfolder(data_dir)
     error('DATA_DIR not found: %s', data_dir);
 end
 
-sub_pass = 5;
+sub_pass = N_PILOT_SUBJECTS;
 require_gait_stage = true;
 require_record_time = true;
 check_emg_export = true;

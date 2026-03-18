@@ -1,5 +1,12 @@
-%% AR(1) 모델 적용 결과 비교
-% 시간적 상관관계를 고려한 CI와 기존 CI를 비교
+%% compare_ci_results.m — AR(1) 보정 CI 비교 분석
+% 시간적 자기상관(AR(1))을 고려한 CI와 기존 Bootstrap CI를 비교하여
+% MSE 변화량 및 CI 폭 차이를 분석한다.
+%
+% 의존성:
+%   - DATA_DIR/export/k5_cont_results.mat (k5_continuous_processing.m 출력)
+%
+% 출력:
+%   - AR(1) 보정 효과 통계 (콘솔), Figure
 
 clear; close all;
 

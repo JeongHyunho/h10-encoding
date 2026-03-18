@@ -1,4 +1,32 @@
 function [t_ss, ss, t_ds, ds, ss_stat, ds_stat] = fp_to_ssds_time(fp_T, init, dur)
+%FP_TO_SSDS_TIME  지면반력에서 단각지지(SS)/양각지지(DS) 시간 산출
+%
+%   [t_ss, ss, t_ds, ds, ss_stat, ds_stat] = FP_TO_SSDS_TIME(fp_T, init, dur)
+%
+%   양발 지면반력으로부터 보행 이벤트를 검출하고, 각 보행 주기 내
+%   단각지지(single support) 및 양각지지(double support) 구간 시간을 계산한다.
+%
+%   입력:
+%     fp_T — 지면반력 테이블 (필수 열: t, LFy, RFy) [table]
+%     init — 분석 시작 시각 [s] (음수이면 종료 시각으로 해석)
+%     dur  — 분석 구간 길이 [s] (음수이면 init로부터 역방향)
+%
+%   출력:
+%     t_ss    — 단각지지 구간 중앙 시각 벡터 [s]
+%     ss      — 단각지지 시간 벡터 [s]
+%     t_ds    — 양각지지 구간 중앙 시각 벡터 [s]
+%     ds      — 양각지지 시간 벡터 [s]
+%     ss_stat — 단각지지 통계 [mean(s), std(s)]
+%     ds_stat — 양각지지 통계 [mean(s), std(s)]
+%
+%   알고리즘:
+%     detect_evt로 좌/우 heel-strike, toe-off를 검출한 뒤,
+%     연속된 보행 주기 내에서 SS = toe-off ~ 반대쪽 heel-strike,
+%     DS = heel-strike ~ 동측 toe-off 구간으로 분할한다.
+%     0.5th/99.5th 백분위수 기준으로 이상치를 제거한다.
+%
+%   참고: detect_evt, fp_to_freq
+
 if init < 0
     init = fp_T.t(end);
 end

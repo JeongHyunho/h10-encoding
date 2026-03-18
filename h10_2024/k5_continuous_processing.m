@@ -1,6 +1,15 @@
-%% K5 Continuous 데이터 처리 스크립트
-% 이 스크립트는 encode_all.m에서 K5 continuous 데이터 처리 부분을 분리한 것입니다.
-% K5 데이터의 연속 조건 에너지 효율성 분석을 수행합니다.
+%% k5_continuous_processing.m — K5 연속 프로토콜 분석
+% 연속 프로토콜(5/10/15분)의 K5 데이터에 ICM 모델(Koller 2019)을 적합하고,
+% Bootstrap CI 및 서브그룹 분석을 수행한다.
+%
+% 의존성:
+%   - setup.m, config.m
+%   - DATA_DIR/export/enc_rs.mat (encode_all.m 출력)
+%
+% 출력:
+%   - DATA_DIR/export/k5_cont_results.mat
+%
+% 파이프라인 순서: encode_all → [이 스크립트]
 
 close all; clear
 
@@ -10,16 +19,15 @@ if contains(mp, 'AppData'),  mp = matlab.desktop.editor.getActiveFilename; end
 cd(fileparts(mp));
 
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 
 % 기본 파라미터 설정
-tau = 41.78;
+tau = TAU_ICM;
 
 % continuous param grid
-disc_p = [0.04, 0.04; 0.04, 0.11; 0.04, 0.18; ...
-    0.11, 0.04; 0.11, 0.11; 0.11, 0.18; ...
-    0.18, 0.04; 0.18, 0.11; 0.18, 0.18];
-[pg_x, pg_y] = meshgrid(0.04:0.001:0.18, 0.04:0.001:0.18);
+disc_p = DISC_TORQUE_GRID;
+pg_x = PG_X; pg_y = PG_Y;
 
 % 파라미터 및 피험자 정보 로드
 opts = detectImportOptions("h10_param.csv");
@@ -36,7 +44,7 @@ interval_walk = readtable('k5_arrange.xlsx', 'Sheet', 'walk');
 
 walks = param.Properties.VariableNames(2:end);
 n_sub = height(sub_info);
-sub_pass = 5;
+sub_pass = N_PILOT_SUBJECTS;
 
 % enc_rs.mat 로드 (nat_ee와 disc_st 값이 필요)
 load(fullfile(data_dir, 'export', 'enc_rs.mat'), 'rs');
@@ -144,7 +152,7 @@ end
 %% 각 길이별 Koller 모델 피팅
 % 5m, 10m, 15m 각각에 대해 개별 Koller 모델 피팅
 
-cont_lengths = ["5m", "10m", "15m"];
+cont_lengths = CONT_DURATIONS;
 k5_cont_results = struct();
 
 for cont_idx = 1:3

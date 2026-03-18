@@ -1,4 +1,32 @@
 function [t, t_pow, pow_stat] = fp_to_power(fp_T, for_vel, fp_freq, init, dur)
+%FP_TO_POWER  지면반력에서 COM 기계적 일률(mechanical power) 계산
+%
+%   [t, t_pow, pow_stat] = FP_TO_POWER(fp_T, for_vel, fp_freq, init, dur)
+%
+%   Donelan et al. (2002) 방법을 적용하여, 지면반력을 적분해 COM 속도를
+%   추정하고, 힘-속도 내적(dot product)으로 일률을 산출한다.
+%   양의 일률(positive)과 음의 일률(negative)을 분리하여 보고한다.
+%
+%   입력:
+%     fp_T    — 지면반력 테이블 (필수 열: t, LFx/LFy/LFz, RFx/RFy/RFz) [table]
+%     for_vel — 전방 보행 속도 [scalar m/s 또는 Nx1 벡터]
+%     fp_freq — 지면반력 샘플링 주파수 [scalar, Hz]
+%     init    — 분석 시작 시각 [s] (음수이면 종료 시각으로 해석)
+%     dur     — 분석 구간 길이 [s] (음수이면 init로부터 역방향)
+%
+%   출력:
+%     t        — 보행 주기 시작 시각 벡터 [s]
+%     t_pow    — 주기별 일률 [Mx2, positive/negative W]
+%     pow_stat — 일률 통계 [mean(pos) mean(neg); std(pos) std(neg)]
+%
+%   알고리즘:
+%     1) detect_evt로 좌/우 heel-strike/toe-off 검출
+%     2) 각 보행 주기 내에서 합력으로 COM 가속도 계산, 적분하여 속도 추정
+%     3) 동측/반대측 힘-속도 내적으로 일률 산출 (Donelan et al., 2002)
+%     4) 양/음 일률을 주기 시간으로 정규화하여 평균 일률로 보고
+%
+%   참고: detect_evt, fp_to_freq, fp_to_ssds_time
+
 if init < 0
     init = fp_T.t(end);
 end

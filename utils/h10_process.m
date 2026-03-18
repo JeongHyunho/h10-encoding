@@ -1,4 +1,40 @@
 function rs = h10_process(h10_file, fp_T, t0, weight)
+%H10_PROCESS  H10 외골격 CSV 데이터 처리 — 보행 분절, 토크/일률 계산
+%
+%   rs = H10_PROCESS(h10_file, fp_T, t0, weight)
+%
+%   H10 외골격 제어기 CSV 로그를 읽어 보행 주기별로 분절(segmentation)한 뒤,
+%   관절 각도, 각속도, 토크, 일률을 계산한다.
+%   토크 상수 tau_c = 0.085 * 18.75 로 전류→토크 변환을 수행한다.
+%
+%   입력:
+%     h10_file — H10 CSV 파일 정보 [struct 또는 struct array]
+%                dir() 출력 형식 (folder, name 필드 필수)
+%     fp_T     — 지면반력 테이블 (보행 이벤트 검출용) [table]
+%     t0       — 각 파일의 시간 오프셋 [1 x numel(h10_file), s]
+%     weight   — 참여자 체중 [scalar, kg]
+%
+%   출력:
+%     rs — 처리 결과 구조체 [struct]
+%       .time        — 보행 주기 내 시간 [M x 301]
+%       .record_time — 절대 기록 시간 [M x 301]
+%       .stance_keep — stance 구간 논리 인덱스 [M x 301]
+%       .inc_deg     — 관절 각도 (inclination) [M x 301, deg]
+%       .jvel_deg    — 관절 각속도 [M x 301, deg/s]
+%       .tau_ref     — 참조 토크 [M x 301, Nm]
+%       .tau_act     — 실측 토크 [M x 301, Nm]
+%       .pow         — 관절 일률 (체중 정규화) [M x 301, W/kg]
+%       .fric_pow_c  — 쿨롱 마찰 일률 성분 [M x 301, W/kg]
+%       .fric_pow_v  — 점성 마찰 일률 성분 [M x 301, W/kg]
+%
+%   알고리즘:
+%     1) CSV 읽기 → Gait_Stage 또는 지면반력 기반 보행 이벤트 검출
+%     2) 4차 Butterworth 저역통과 (6 Hz) 필터 적용
+%     3) segInterp로 각 보행 주기를 301 포인트로 보간
+%     4) 전류 × tau_c로 토크 변환, 토크 × 각속도로 일률 산출
+%
+%   참고: detect_evt, read_fp_table, read_log_file
+
 rs = struct();
 
 tau_c = 0.085 * 18.75;

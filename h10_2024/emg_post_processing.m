@@ -1,6 +1,15 @@
-%% EMG Post Processing Pipeline
-% 이 스크립트는 EMG 데이터의 포괄적인 후처리 파이프라인을 실행합니다.
-% 각 단계별로 분리된 스크립트를 순차적으로 호출합니다.
+%% emg_post_processing.m — EMG 후처리 파이프라인
+% EMG 데이터의 품질 검사, 채널 필터링, MVC 정규화, 활성도 산출을 순차 실행한다.
+%
+% 의존성:
+%   - setup.m, config.m
+%   - DATA_DIR/export/enc_rs.mat
+%   - V3D_PATH의 emg_exported_*.txt 파일
+%
+% 출력:
+%   - DATA_DIR/export/emg_norm.mat
+%
+% 파이프라인 순서: encode_all → [이 스크립트]
 
 close all; clear
 
@@ -12,6 +21,7 @@ end
 cd(mfile_dir)
 
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 
 % Load encoded data
@@ -21,7 +31,7 @@ load(fullfile(data_dir, 'export', 'enc_rs.mat'), 'rs')
 param = readtable('h10_param.csv', detectImportOptions("h10_param.csv", "TextType", "string"));
 sub_info = readtable('sub_info.csv', detectImportOptions("sub_info.csv", "TextType", "string"));
 n_sub = height(sub_info);
-sub_pass = 5;
+sub_pass = N_PILOT_SUBJECTS;
 
 idx_info = struct();
 for i = 1+sub_pass:n_sub

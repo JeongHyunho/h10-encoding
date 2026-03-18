@@ -1,4 +1,5 @@
 *.asv
+*.mat
 h10_2024/setup.m
 h10_2024/emg_channel_success*.csv
 h10_2024/subject_summary.xlsx

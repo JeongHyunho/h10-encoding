@@ -1,13 +1,28 @@
-% 실험 데이터 인코딩 (K5, H10, FP, Log)
+%% encode_all.m — H10 실험 통합 인코딩 파이프라인
+% K5 대사, 지면반력(FP), H10 외골격, 로그 데이터를 통합하여
+% 각 참여자·시도별 결과를 구조체(enc_rs.mat)로 저장한다.
+%
+% 의존성:
+%   - setup.m, config.m (환경 및 상수 설정)
+%   - h10_param.csv, sub_info.csv, k5_arrange.xlsx (메타데이터)
+%   - DATA_DIR 환경변수가 가리키는 데이터 폴더
+%
+% 출력:
+%   - DATA_DIR/export/enc_rs.mat (rs 구조체)
+%
+% 파이프라인 순서: insane_check → post_log_process → [이 스크립트] → k5_continuous_processing
+
 close all; clear
 mp = mfilename('fullpath');
 if contains(mp, 'AppData'),  mp = matlab.desktop.editor.getActiveFilename; end
 cd(fileparts(mp));
 
+%% 환경 설정 및 메타데이터 로드
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 
-tau = 41.78;
+tau = TAU_ICM;
 
 use_log_cache = true;
 
@@ -20,11 +35,11 @@ if use_log_cache && exist(log_cache_file, 'file')
     end
 end
 
-for_vel = 1.5;
+for_vel = TREADMILL_SPEED;
 
-fp_freq = 500;
-calmat_left = readmatrix(fullfile(data_dir, 'fp', 'cal_mat_left.txt'));
-calmat_right = readmatrix(fullfile(data_dir, 'fp', 'cal_mat_right.txt'));
+fp_freq = FP_FREQ;
+calmat_left = readmatrix(fullfile(data_dir, 'fp', 'cal_mat_left.txt'));   % 지면반력계 보정 행렬 (좌 발판)
+calmat_right = readmatrix(fullfile(data_dir, 'fp', 'cal_mat_right.txt')); % 지면반력계 보정 행렬 (우 발판)
 
 opts = detectImportOptions("h10_param.csv");
 opts = setvartype(opts, opts.VariableNames, "string");
@@ -34,12 +49,13 @@ opts = detectImportOptions("sub_info.csv");
 opts = setvartype(opts, opts.VariableNames, "string");
 sub_info = readtable('sub_info.csv', opts);
 
+%% 결과 구조체 초기화
 rs = struct();
 rs.param = param;
 rs.sub_info = sub_info;
 rs.n_sub = height(rs.sub_info);
 rs.p_name = ["T^{Max}_{Swing}", "T^{Max}_{Stance}"];
-rs.sub_pass = 5;
+rs.sub_pass = N_PILOT_SUBJECTS;
 
 walks = param.Properties.VariableNames(2:end);
 
@@ -47,10 +63,8 @@ interval_stand = readtable('k5_arrange.xlsx', 'Sheet', 'stand');
 interval_walk = readtable('k5_arrange.xlsx', 'Sheet', 'walk');
 
 % continuous param grid
-disc_p = [0.04, 0.04; 0.04, 0.11; 0.04, 0.18; ...
-    0.11, 0.04; 0.11, 0.11; 0.11, 0.18; ...
-    0.18, 0.04; 0.18, 0.11; 0.18, 0.18];
-[pg_x, pg_y] = meshgrid(0.04:0.001:0.18, 0.04:0.001:0.18);
+disc_p = DISC_TORQUE_GRID;
+pg_x = PG_X; pg_y = PG_Y;
 
 rs.pg_x = pg_x;
 rs.pg_y = pg_y;
@@ -146,14 +160,15 @@ rs.units.h10 = struct( ...
     'fric_pow_v', "(rad/s)^2/kg" ...
     );
 
-cont_list = ["5m", "10m", "15m"];
+cont_list = CONT_DURATIONS;
 cont_stack_p = cell(numel(cont_list), 1);
 cont_stack_t = cell(numel(cont_list), 1);
 cont_stack_ee = cell(numel(cont_list), 1);
 cont_stack_trial = cell(numel(cont_list), 1);
 cont_stack_sub = cell(numel(cont_list), 1);
 cont_trial_counter = zeros(numel(cont_list), 1);
-%% Encode
+%% 참여자별 인코딩 루프
+% K5(대사), FP(지면반력), H10(외골격), Log(파라미터) 데이터를 시도별로 처리
 
 for i = rs.sub_pass+1:rs.n_sub
     sub_name = rs.sub_info.ID(i);
@@ -220,7 +235,7 @@ for i = rs.sub_pass+1:rs.n_sub
                 % walking ee
                 w_int = sub_walk.(walk);
                 if ~iscell(w_int) || isempty(w_int{1})
-                    [t_, ee_, ~, ee_walk] = k5_to_ee(k5_table, -120, -1);
+                    [t_, ee_, ~, ee_walk] = k5_to_ee(k5_table, -120, -1);  % 마지막 120초~1초 전 구간 (정상상태 walking)
                 else
                     w_int = str2num(w_int{1});
                     ee_tmp = [];
@@ -398,15 +413,15 @@ for i = rs.sub_pass+1:rs.n_sub
             
             % todo: cont 도 처리하도록
             if ismember(j, [idx_info.non_exo; idx_info.train; idx_info.transparent; idx_info.disc])
-                [~, ~, ~, ~, ss_stat, ds_stat] = fp_to_ssds_time(fp_T, -1, -120);
+                [~, ~, ~, ~, ss_stat, ds_stat] = fp_to_ssds_time(fp_T, -1, -120);  % 마지막 120초~1초 전 (정상상태)
                 walk_rs.ssT = ss_stat;
                 walk_rs.dsT = ds_stat;
 
-                [~, ~, freq_stat] = fp_to_freq(fp_T, -1, -120);
+                [~, ~, freq_stat] = fp_to_freq(fp_T, -1, -120);  % 마지막 120초~1초 전 (정상상태)
                 walk_rs.freq = freq_stat;
                 [freq_t, freq, ~] = fp_to_freq(fp_T, 0, Inf);
                 walk_rs.freqt = [freq_t, freq];
-                [~, ~, pow_stat] = fp_to_power(fp_T, for_vel, fp_freq, -1, -120);
+                [~, ~, pow_stat] = fp_to_power(fp_T, for_vel, fp_freq, -1, -120);  % 마지막 120초~1초 전 (정상상태)
                 walk_rs.com_pow = pow_stat;
             elseif ismember(j, idx_info.cont)
                 [t_ss, ss, t_ds, ds, ss_stat, ds_stat] = fp_to_ssds_time(fp_T, 0, Inf);
@@ -456,6 +471,9 @@ for i = rs.sub_pass+1:rs.n_sub
 
         sub_rs.(walk) = walk_rs;
     end
+
+    %% 자연 보행(non-exo) 기준값 할당
+    % 각 실험일의 비보조 보행 EE를 해당일 보조 시도에 매핑
 
     % day 별 natural ee, stand, freq, pow, ssT, dsT 계산
     for j = setdiff(idx_info.non_exo, idx_info.eval_fail)'
@@ -526,6 +544,9 @@ for i = rs.sub_pass+1:rs.n_sub
         end
     end
 
+    %% 이산 프로토콜 결과 요약
+    % 참여자별 9점 격자의 EE, transparent EE, standing EE 집계
+
     % ee summary 저장
     idx_w = setdiff(idx_info.disc, idx_info.eval_fail);
     idx_w_trs = setdiff(idx_info.transparent, idx_info.eval_fail);
@@ -583,6 +604,9 @@ for i = rs.sub_pass+1:rs.n_sub
     rs.(sub_name) = sub_rs;
     fprintf('[Encoding] %s done!\n', sub_name)
 end
+
+%% 풀링된 연속 프로토콜 ICM 적합 (Koller 모델)
+% 전체 참여자 데이터를 합쳐 공유 기울기 + 참여자별 절편 추정
 
 % pooled continuous fit (shared slopes, all subjects)
 if any(~cellfun(@isempty, cont_stack_ee))
@@ -680,6 +704,9 @@ else
     warning('No continuous data pooled for Koller fit.')
 end
 
+%% 이산 프로토콜 혼합효과 모델 (LME)
+% 1차·2차 다항식 + 참여자 임의 절편
+
 if ~isempty(all_disc_z)
     disc_all_T = table(all_disc_x, all_disc_y, all_disc_z, categorical(all_disc_sub), ...
         'VariableNames', ["x", "y", "z", "subject"]);
@@ -706,6 +733,7 @@ else
     warning('No valid discrete data for mixed-effects fit. disc_ee_fit1/2 skipped.')
 end
 
+%% 결과 저장
 save(fullfile(data_dir, 'export', 'enc_rs.mat'), 'rs', '-v7.3')
 
 %% functions

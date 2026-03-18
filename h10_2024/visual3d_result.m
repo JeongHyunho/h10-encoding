@@ -1,5 +1,13 @@
-%% Visual3D 역동역학 결과 정리
-% Mat 파일 생성
+%% visual3d_result.m — Visual3D 역동역학 결과 정리
+% V3D에서 내보낸 관절 토크·각도 데이터를 보행 주기별로 정규화하고
+% 참여자·조건별 구조체(idyn_summary.mat)로 저장한다.
+%
+% 의존성:
+%   - setup.m, config.m
+%   - V3D_PATH의 exported_*.txt 파일
+%
+% 출력:
+%   - DATA_DIR/export/idyn_summary.mat
 close all; clear
 mp = mfilename('fullpath');
 if contains(mp, 'AppData'),  mp = matlab.desktop.editor.getActiveFilename; end

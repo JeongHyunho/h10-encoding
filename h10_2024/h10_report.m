@@ -1,11 +1,20 @@
-%% h10 결과 정리
-% 결과 리뷰 플롯 생성/저장
+%% h10_report.m — H10 외골격 데이터 리포트 생성
+% enc_rs.mat의 H10 관절각도·토크·일률 데이터를 3x3 격자 및 개별 시도별로
+% 시각화하여 리포트 Figure를 생성한다.
+%
+% 의존성:
+%   - setup.m
+%   - DATA_DIR/export/enc_rs.mat
+%
+% 출력:
+%   - DATA_DIR/h10/report/ 하위 디렉토리에 Figure 파일들
 close all; clear
 mp = mfilename('fullpath');
 if contains(mp, 'AppData'),  mp = matlab.desktop.editor.getActiveFilename; end
 cd(fileparts(mp));
 
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 
 load(fullfile(data_dir, 'export', 'enc_rs.mat'), 'rs')
@@ -14,7 +23,7 @@ sub_info = rs.sub_info;
 sub_pass = rs.sub_pass;
 
 n_sub = height(sub_info);
-n = 301;
+n = N_PHASE_POINTS;
 ph = linspace(0, 100, n);
 
 %% review h10 data

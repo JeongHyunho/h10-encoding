@@ -1,11 +1,20 @@
-%% 역동역학 결과 정리
-% 결과 리뷰 플롯 생성/저장
+%% inv_dyn_report.m — 역동역학 분석 리포트
+% idyn_summary.mat의 관절 토크·일률 데이터를 분석하여
+% 생체 관절 일률, 외골격 기여 일률, 보행 역학 지표를 산출한다.
+%
+% 의존성:
+%   - setup.m, config.m
+%   - DATA_DIR/export/enc_rs.mat, idyn_summary.mat
+%
+% 출력:
+%   - 분석 결과 (워크스페이스), 리포트 Figure
 close all; clear
 mp = mfilename('fullpath');
 if contains(mp, 'AppData'),  mp = matlab.desktop.editor.getActiveFilename; end
 cd(fileparts(mp));
 
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 
 load(fullfile(data_dir, 'export', 'enc_rs.mat'), 'rs')
@@ -14,13 +23,13 @@ sub_info = rs.sub_info;
 sub_pass = rs.sub_pass;
 
 n_sub = height(sub_info);
-n = 301;
+n = N_PHASE_POINTS;
 ph = linspace(0, 100, n);
 
-d = 0.5;
+d = TORQUE_SHAPE_EXP;
 
-fric_c = 0.00;
-fric_v = 0.00;
+fric_c = 0.00;  % 쿨롱 마찰 계수 (현재 비활성)
+fric_v = 0.00;  % 점성 마찰 계수 (현재 비활성)
 
 %% load all inv_dyn date
 rs_inv = struct();

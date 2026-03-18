@@ -1,5 +1,12 @@
-%% CI 분석 스크립트
-% 2차원 파라미터 공간에서 flexion과 extension 중앙선의 CI 변화를 분석
+%% analyze_ci.m — 연속 프로토콜 신뢰구간(CI) 분석
+% 2차원 파라미터 공간에서 flexion과 extension 중앙선의 Bootstrap CI 폭 변화를
+% 5m/10m/15m 프로토콜별로 분석·시각화한다.
+%
+% 의존성:
+%   - DATA_DIR/export/k5_cont_results.mat (k5_continuous_processing.m 출력)
+%
+% 출력:
+%   - CI 폭 통계 (콘솔), Figure
 
 clear; close all;
 

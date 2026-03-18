@@ -1,7 +1,17 @@
-%% Log Post Processing Pipeline
-% 이 스크립트는 로그(.tdms) 파일의 후처리 파이프라인을 실행합니다.
-% - encode_all.m 에서 로그 관련 절차를 발췌/재구성하여 모듈화합니다.
-% - log_scripts 폴더의 함수들을 단계별로 호출합니다.
+%% post_log_process.m — 로그 파일 후처리 파이프라인
+% H10 로그(.tdms) 파일의 시간 정합성·파라미터 일치 여부를 점검하고,
+% 파라미터/시계열을 추출·병합하여 log_rs.mat으로 저장한다.
+%
+% 의존성:
+%   - setup.m
+%   - DATA_DIR/export/enc_rs.mat (encode_all.m 출력, idx_info 참조)
+%   - h10_param.csv, sub_info.csv
+%   - log_scripts/ 폴더의 함수들
+%
+% 출력:
+%   - DATA_DIR/export/log_rs.mat
+%
+% 파이프라인 순서: insane_check → [이 스크립트] → encode_all
 
 close all; clear
 
@@ -14,6 +24,7 @@ cd(mfile_dir)
 
 % 프로젝트 설정 로드
 run('setup.m')
+run('config.m')
 data_dir = getenv('DATA_DIR');
 if ~isfolder(data_dir)
     error('DATA_DIR 경로가 올바르지 않습니다: %s', data_dir);
@@ -43,7 +54,7 @@ sub_info = readtable('sub_info.csv', opts_sub);
 n_sub = height(sub_info);
 
 % sub_pass, S008, S009, S010 무시
-sub_pass = 5;
+sub_pass = N_PILOT_SUBJECTS;
 
 % 보행 변수 리스트 (walk1, walk2, ...)
 walks = param.Properties.VariableNames(2:end);
@@ -58,7 +69,7 @@ for i = 1+sub_pass:n_sub
 end
 
 % 공통 상수
-fp_freq = 500; % encode_all.m 설정과 동일
+fp_freq = FP_FREQ;
 
 %% Step 1: 로그 파일 점검 (시간 정합성/파라미터 일치 여부)
 fprintf('=== Step 1: 로그 파일 점검(시간/파라미터) ===\n');

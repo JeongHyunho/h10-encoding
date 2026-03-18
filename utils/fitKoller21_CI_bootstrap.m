@@ -1,15 +1,37 @@
 function [CI_lower, CI_upper, y_pred_grid] = fitKoller21_CI_bootstrap(xseries, yseries, tseries, msmt, trials, tau, x_grid, y_grid, n_bootstrap)
-% Bootstrap 방법을 사용해서 confidence interval을 계산
-% 시간적 상관관계와 모델 불확실성을 모두 고려합니다.
+%FITKOLLER21_CI_BOOTSTRAP  Bootstrap 방법으로 ICM 계수의 95% 신뢰구간 추정
 %
-% 입력:
-%   xseries, yseries, tseries, msmt, trials, tau: fitKoller21과 동일
-%   x_grid, y_grid: 예측할 파라미터 그리드
-%   n_bootstrap: bootstrap 반복 횟수 (기본값: 1000)
+%   [CI_lower, CI_upper, y_pred_grid] = FITKOLLER21_CI_BOOTSTRAP( ...
+%       xseries, yseries, tseries, msmt, trials, tau, x_grid, y_grid)
+%   [CI_lower, CI_upper, y_pred_grid] = FITKOLLER21_CI_BOOTSTRAP( ...
+%       ___, n_bootstrap)
 %
-% 출력:
-%   CI_lower, CI_upper: 각 그리드 포인트에서의 95% CI 하한/상한
-%   y_pred_grid: 예측값 그리드
+%   Trial 단위 복원추출(block bootstrap)로 모델 불확실성을 추정한다.
+%   시간적 상관관계를 보존하기 위해 개별 관측이 아닌 trial 전체를 리샘플링한다.
+%
+%   입력:
+%     xseries     — 첫 번째 입력 변수 (예: 굴곡 토크 크기) [Nx1]
+%     yseries     — 두 번째 입력 변수 (예: 신전 토크 크기) [Nx1]
+%     tseries     — 시간 벡터 [Nx1, s]
+%     msmt        — 관측된 대사 응답 벡터 [Nx1, W]
+%     trials      — 시행(trial) 번호 벡터 [Nx1, integer]
+%     tau         — 대사 응답 시상수 [scalar, s]
+%     x_grid      — 예측 그리드의 x 좌표 [M x K matrix]
+%     y_grid      — 예측 그리드의 y 좌표 [M x K matrix]
+%     n_bootstrap — bootstrap 반복 횟수 [scalar, 기본값: 1000]
+%
+%   출력:
+%     CI_lower    — 각 그리드 포인트에서 95% CI 하한 [M x K]
+%     CI_upper    — 각 그리드 포인트에서 95% CI 상한 [M x K]
+%     y_pred_grid — 원본 모델의 예측값 그리드 [M x K]
+%
+%   알고리즘:
+%     1) 원본 데이터로 fitKoller21 적합하여 기준 예측값 산출
+%     2) n_bootstrap 회 trial 단위 복원추출 → 각 반복에서 fitKoller21 재적합
+%     3) 각 그리드 포인트에서 2.5th/97.5th 백분위수로 95% CI 산출
+%     적합 실패 시 원본 예측값으로 대체하여 안정성 확보.
+%
+%   참고: fitKoller21, fitKoller21_agg
 
 if nargin < 9
     n_bootstrap = 1000;

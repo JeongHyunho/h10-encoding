@@ -1,4 +1,36 @@
 function [y0, H, y_est, MSE, Sig, subj_intercept, subj_list] = fitKoller21_agg(xseries, yseries, tseries, msmt, trials, subjects, tau)
+%FITKOLLER21_AGG  다중 참여자 집단(aggregated) ICM 모델 적합
+%
+%   [y0, H, y_est, MSE, Sig, subj_intercept, subj_list] = ...
+%       FITKOLLER21_AGG(xseries, yseries, tseries, msmt, trials, subjects, tau)
+%
+%   공유 기울기(H) + 참여자별 절편(subj_intercept)을 추정한다.
+%   각 trial은 단일 참여자에 매핑되어야 한다.
+%
+%   입력:
+%     xseries  — 첫 번째 입력 변수 (예: 굴곡 토크 크기) [Nx1, Nm/kg]
+%     yseries  — 두 번째 입력 변수 (예: 신전 토크 크기) [Nx1, Nm/kg]
+%     tseries  — 시간 벡터 [Nx1, s]
+%     msmt     — 관측된 대사 응답 벡터 [Nx1, W]
+%     trials   — 시행(trial) 번호 벡터 [Nx1, integer]
+%     subjects — 참여자 식별자 벡터 [Nx1]
+%     tau      — 대사 응답 시상수 [scalar, s]
+%
+%   출력:
+%     y0             — 각 trial의 초기값(절편) [n_trial x 1]
+%     H              — 공유 ICM 계수 [lx, ly] — 기울기 2개
+%     y_est          — 모델 추정값 [Nx1]
+%     MSE            — 평균 제곱 오차 [scalar]
+%     Sig            — ICM 계수(H)의 공분산 행렬 [2x2]
+%     subj_intercept — 참여자별 절편 [n_sub x 1]
+%     subj_list      — 참여자 식별자 목록 [n_sub x 1]
+%
+%   알고리즘:
+%     fitKoller21과 동일한 지수 wash-in 구조를 사용하되, 참여자별 절편 열을
+%     추가하여 개인 간 기저 대사 차이를 흡수한다. 기울기(H)는 모든 참여자가 공유.
+%
+%   참고: fitKoller21, fitKoller21_CI_bootstrap
+
 % Aggregated ICM fit with shared slopes and subject-specific intercepts.
 
 xseries = xseries(:);

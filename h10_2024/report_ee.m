@@ -1,4 +1,14 @@
-%% EE 데이터 확인
+%% report_ee.m — 에너지 소모율(EE) 리포트 생성
+% enc_rs.mat의 이산/연속 프로토콜 EE 데이터를 시각화하고
+% Standing EE 비교, 2D EE landscape 등의 리포트 Figure를 생성한다.
+%
+% 의존성:
+%   - setup.m
+%   - DATA_DIR/export/enc_rs.mat
+%   - k5_arrange.xlsx (구간 정보)
+%
+% 출력:
+%   - DATA_DIR/report/ 하위 디렉토리에 Figure 파일들
 close all; clear
 
 run('setup.m')

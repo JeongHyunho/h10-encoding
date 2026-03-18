@@ -1,5 +1,30 @@
 function cache = get_log_cache(log_rs, sub_name, walk)
-%GET_LOG_CACHE Return cached log data for encode_all.m.
+%GET_LOG_CACHE  로그 캐시 구조체에서 특정 참여자/walk의 데이터 조회
+%
+%   cache = GET_LOG_CACHE(log_rs, sub_name, walk)
+%
+%   encode_all.m 등에서 사전 파싱된 로그 캐시(log_rs)로부터
+%   특정 참여자와 walk의 시간, 파라미터 데이터를 안전하게 추출한다.
+%   해당 데이터가 없으면 기본값(available=false)을 반환한다.
+%
+%   입력:
+%     log_rs   — 로그 캐시 구조체 [struct] (필드: sub_name.walk.*)
+%                빈 배열 또는 비구조체이면 기본 cache 반환
+%     sub_name — 참여자 식별 필드명 [char, 예: 'S001']
+%     walk     — walk 식별 필드명 [char, 예: 'walk01']
+%
+%   출력:
+%     cache — 조회 결과 구조체 [struct]
+%       .available  — 데이터 존재 여부 [logical]
+%       .log_t      — 로그 타임스탬프 [datetime array]
+%       .log_p      — 보조 파라미터 [Nx2]
+%       .p_median   — 파라미터 중앙값 [1x2, 기본값: NaN NaN]
+%       .double_log — 분할 로그 여부 [logical]
+%       .log_start  — 로그 시작 시각 [datetime]
+%       .log_end    — 로그 종료 시각 [datetime]
+%       .t_ranges   — 시간 범위 정보 []
+%
+%   참고: read_log_file
 
 cache = struct( ...
     'available', false, ...
