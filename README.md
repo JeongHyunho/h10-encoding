@@ -109,13 +109,16 @@ Day 1 (훈련)              Day 2                    Day 3
    git clone <repo-url> h10-encoding
    ```
 
-2. `h10_2024/setup_template.m`을 `h10_2024/setup.m`으로 복사한 후, 데이터 경로를 수정한다:
-   ```matlab
+2. `h10_2024/setup_template.m`을 `h10_2024/setup.m`으로 복사한 후, 로컬 데이터 경로를 수정한다:
+   ```bash
    cp h10_2024/setup_template.m h10_2024/setup.m
+   # setup.m 내부의 data_path, v3d_path 를 로컬 환경에 맞게 수정
    ```
-   `setup.m`은 `.gitignore`에 포함되어 있으므로 로컬 경로가 커밋되지 않는다.
+   `h10_2024/setup.m`은 `.gitignore`에 포함되어 있으므로 로컬 경로가 커밋되지 않는다.
+   (루트의 `setup.m`은 `utils/` path 추가 전용으로, 별도 수정 없이 추적된다.)
 
 3. MATLAB에서 `h10_2024/` 디렉토리로 이동한 뒤 `setup`을 실행한다.
+   이 스크립트는 내부에서 루트 `setup.m`(utils path 추가)과 `config.m`(공유 상수)을 자동 호출한다.
 
 ## Data Directory Structure
 
